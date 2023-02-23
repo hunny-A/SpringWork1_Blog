@@ -6,13 +6,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class BlogRequestDto {
-    private String date;
+public class CommentRequestDto {
     private Long id;
-    private String title;
+    private String comments;
     private String username;
-    private String contents;
     private User user;
-
-
 }

@@ -3,12 +3,15 @@ package com.sparta.springwork2_blog.service;
 
 import com.sparta.springwork2_blog.dto.request.BlogRequestDto;
 import com.sparta.springwork2_blog.dto.response.BlogResponseDto;
+import com.sparta.springwork2_blog.dto.response.CommentResponseDto;
 import com.sparta.springwork2_blog.dto.response.MegResponseDto;
 import com.sparta.springwork2_blog.entity.Blog;
+import com.sparta.springwork2_blog.entity.Comment;
 import com.sparta.springwork2_blog.entity.User;
 import com.sparta.springwork2_blog.entity.UserRoleEnum;
 import com.sparta.springwork2_blog.jwt.JwtUtil;
 import com.sparta.springwork2_blog.repository.BlogRepository;
+import com.sparta.springwork2_blog.repository.CommentRepository;
 import com.sparta.springwork2_blog.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +33,13 @@ public class BlogService {
 
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final JwtUtil jwtUtil;
 
 
     /* 전체 게시글 목록 조회 */
     @Transactional(readOnly = true)
-    public List<BlogResponseDto> getBlogs() {
+    public ResponseEntity getBlogs() {
         /*return blogRepository.findAllByOrderByCreatedAtDesc();
         String token = jwtUtil.resolveToken(request);
         Claims claims;
@@ -63,22 +68,30 @@ public class BlogService {
             return list;
         }
         return null;*/
+            List<Blog> blogList = blogRepository.findAllByOrderByCreatedAtAsc();
             List<BlogResponseDto> list = new ArrayList<>();
-            List<Blog> blogList = blogRepository.findAllByOrderByCreatedAtDesc();
+            List<CommentResponseDto> listC = new ArrayList<>();
 
             for(Blog blog : blogList){
-                BlogResponseDto bDto = new BlogResponseDto(blog);
-                list.add(bDto);
+                /*List<Comment> commentList = commentRepository.findAllByOrderByCreatedAtDesc(blog);
+                for(Comment comment : commentList){
+                    CommentResponseDto cDto = new CommentResponseDto(comment);
+                    listC.add(cDto);
+                }
+                list.add(new BlogResponseDto(blog, listC));*/
+                listC = commentRepository.findAllByBlogOrderByCreatedAtAsc(blog)
+                                .stream()
+                                        .map(CommentResponseDto::new)
+                                                .collect(Collectors.toList());
+                list.add(new BlogResponseDto(blog, listC));
             }
-
-            return list;
+            return ResponseEntity.ok(list);
     }
 
 
     /* 게시글 작성 */
     @Transactional
     public BlogResponseDto createBlog(User user, BlogRequestDto requestDto, HttpServletRequest request){   //HttpServletRequest : HTTP 요청 메시지 파싱
-       // token방식
         /*// Request에서 Token 가져오기
         String token = jwtUtil.resolveToken(request);
         Claims claims;
@@ -95,16 +108,9 @@ public class BlogService {
         User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
                 () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
         );*/
-        /*            return new BlogResponseDto(blogRepository.saveAndFlush(Blog.builder()
-                    .blogrequestDto(requestDto)
-                    .user(user)
-                    .build()));
-*/
-
         if(user.getRole() != null){
             Blog blog = blogRepository.save(new Blog(requestDto,user));
             return new BlogResponseDto(blog);
-
         }
         throw new IllegalArgumentException("로그인이 필요합니다.");
     }
@@ -144,19 +150,13 @@ public class BlogService {
     @Transactional
     public BlogResponseDto update(Long id, User user, BlogRequestDto requestDto, HttpServletRequest request) {
 
-        /*
-         * 1. UDI에서 심사 완료된 유저명과 비교
-         * 2. 같을 때 수정 가능
-         * 3. 다를 때 예외처리 : 실사용자가 아닙니다."
-         * */
-
         Blog blog = blogRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("게시물이 존재하지 않습니다.")
         );
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        System.out.println("authentication.getName() : " + authentication.getName());
-//        System.out.println("(blog.getUser().getUsername() : "+(blog.getUser().getUsername()));
+        /*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("authentication.getName() : " + authentication.getName());
+        System.out.println("(blog.getUser().getUsername() : "+(blog.getUser().getUsername()));*/
 
         if(blog.getUser().getUsername().equals(user.getUsername()) || user.getRole() == UserRoleEnum.ADMIN){
             // 💥 영속성 컨텍스트, 더티 체킹 확인
@@ -165,9 +165,7 @@ public class BlogService {
             throw new IllegalArgumentException("실사용자가 아닙니다.");
         }
 
-
         return new BlogResponseDto(blog);
-
         /* //토큰 비교 방식
 
         String token = jwtUtil.resolveToken(request);
@@ -209,7 +207,6 @@ public class BlogService {
         );
 
         if(blog.getUser().getUsername().equals(user.getUsername()) || user.getRole() == UserRoleEnum.ADMIN){
-            // 📌 entity와 Id
             blogRepository.delete(blog);
         } else {
             return ResponseEntity.ok()
@@ -218,14 +215,12 @@ public class BlogService {
                             .msg("실 사용자가 아닙니다.")
                             .build());
         }
-
         return ResponseEntity.ok()
                 .body(MegResponseDto.builder()
                         .statusCode(HttpStatus.OK.value())
                         .msg("게시글 삭제 성공")
                         .build());
     }
-
         /* //토큰 비교 방식
 
         String token = jwtUtil.resolveToken(request);

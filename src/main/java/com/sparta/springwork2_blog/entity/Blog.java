@@ -1,12 +1,13 @@
 package com.sparta.springwork2_blog.entity;
 
-
 import com.sparta.springwork2_blog.dto.request.BlogRequestDto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 // 도메인 객체 생성
 @Getter // 코드를 작성하지 않아도 get, set 함수 사용 가능 (Lombok 어노테이션)  apple이라는 필드에 선언하면 자동으로 getApple()라는 메소드를 생성해준다.
@@ -29,6 +30,9 @@ public class Blog extends Timestamped{
     @ManyToOne  // MTO의 기본 로딩 정책 : Eager Loading(자식 Entity를 조회할 때 자동으로 부모 Entity 조회해 옴) 부모 Entity를 사용할 필요가 없다면 속도를 위해 (fetch = FetchType.LAZY)로 설정할 수 있다.즉시 데이터를 DB에서 가지고 오는 것.
     @JoinColumn(name = "user_id", nullable = false) //name속성에는 매핑할 외래 키 이름 지정(생략 가능) 현재 엔티티(테이블) 기준으로 조인의 대상으로 사용할 컬럼의 이름 지정 어노테이션
     private User user;
+
+    @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL)
+    private List<Comment> comments = new ArrayList<>();
 
     @Builder
     public Blog(BlogRequestDto blogrequestDto, User user){ // 생성자 오버로딩

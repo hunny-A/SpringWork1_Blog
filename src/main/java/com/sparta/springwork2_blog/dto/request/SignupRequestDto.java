@@ -10,7 +10,6 @@ import javax.validation.constraints.Pattern;
 @Setter
 @Getter
 public class SignupRequestDto {
-
     @NotBlank
     @Pattern(regexp = "[a-z]+[a-z0-9]{3,9}$",message = "알파벳 소문자와 숫자를 이용해 최소 4문자 최대 10문자의 아이디를 만드세요.")
     private String username;

@@ -38,7 +38,6 @@ public class UserDetailsImpl implements UserDetails {
         return authorities;
     }
 
-
     // 사용자의 ID Getter
     @Override
     public String getUsername() {

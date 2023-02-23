@@ -4,6 +4,7 @@ package com.sparta.springwork2_blog.controller;
 import com.sparta.springwork2_blog.dto.request.BlogRequestDto;
 import com.sparta.springwork2_blog.dto.response.BlogResponseDto;
 import com.sparta.springwork2_blog.dto.response.MegResponseDto;
+import com.sparta.springwork2_blog.entity.Blog;
 import com.sparta.springwork2_blog.security.UserDetailsImpl;
 import com.sparta.springwork2_blog.service.BlogService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class BlogController {
 
     /* 전체 게시글 조회 */
     @GetMapping("/blogs")
-    public List<BlogResponseDto> getBlogs() {
+    public ResponseEntity getBlogs() {
         return blogService.getBlogs();
     }
 

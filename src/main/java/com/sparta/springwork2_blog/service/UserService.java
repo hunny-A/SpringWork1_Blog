@@ -31,7 +31,7 @@ public class UserService {
     @Transactional
     public ResponseEntity<MegResponseDto> signup(SignupRequestDto signupRequestDto, BindingResult result) {
         String username = signupRequestDto.getUsername();
-        String password = signupRequestDto.getPassword();
+        String password = signupRequestDto.getPassword();   //passWordEncoder
 
         //  유효성 검사 통과 못 한 경우
         if (result.hasErrors()) {   // Return if there were any errors.
@@ -45,6 +45,7 @@ public class UserService {
         }
 
         // 회원 중복 확인
+
         Optional<User> found = userRepository.findByUsername(username);
         if(found.isPresent()){
             return ResponseEntity.badRequest()
@@ -54,8 +55,10 @@ public class UserService {
                             .build());
         }
 
+
         // 관리자 등록
         UserRoleEnum role = UserRoleEnum.USER;
+
 
         if(!signupRequestDto.getAdminToken().isEmpty()){    //AdminToken이 비어있지 않다면 실행
             if(!signupRequestDto.getAdminToken().equals(ADMIN_TOKEN)){
@@ -67,6 +70,7 @@ public class UserService {
             }
             role = UserRoleEnum.ADMIN;
         }
+
 
 
         userRepository.save(User.builder()
